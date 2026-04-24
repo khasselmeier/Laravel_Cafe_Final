@@ -3,7 +3,7 @@ $host='database-laravel-cafe.cjsumq8skg4q.us-east-2.rds.amazonaws.com';
 $port=3306;
 $db='laravel';
 $user='admin';
-$password='ymeW.m[37TlES)_G<lW7OtzF46s4';
+$password='X#gWoD5DFmbThUX*6QMw4C]![f6H';
 $conn = null;
 
 try {

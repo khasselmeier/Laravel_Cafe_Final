@@ -8,22 +8,28 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderItemController extends Controller
 {
-    // Remove a single item from cart
     public function destroy(OrderItem $item)
     {
-        $this->authorize('update', $item->order); // optional: ensure user owns the order
+        $this->authorize('update', $item->order);
+
+        $order = $item->order;
 
         $item->delete();
 
-        // Recalculate order total
-        $order = $item->order;
-        $order->total_amount = $order->items()->sum(fn($i) => $i->quantity * $i->price);
+        // FIXED total calculation
+        $order->load('items');
+        $order->total_amount = $order->items->sum(function ($i) {
+            return $i->quantity * $i->price;
+        });
         $order->save();
 
-        return redirect()->back()->with('success', 'Item removed from cart!');
+        return response()->json([
+            'success' => true,
+            'cartCount' => $order->items->sum('quantity'),
+            'message' => 'Item removed from cart!',
+        ]);
     }
 
-    // Remove all items from the current user's pending order
     public function destroyAll()
     {
         $user = Auth::user();
@@ -35,6 +41,10 @@ class OrderItemController extends Controller
             $order->save();
         }
 
-        return redirect()->back()->with('success', 'All items removed from cart!');
+        return response()->json([
+            'success' => true,
+            'cartCount' => 0,
+            'message' => 'All items removed from cart!',
+        ]);
     }
 }

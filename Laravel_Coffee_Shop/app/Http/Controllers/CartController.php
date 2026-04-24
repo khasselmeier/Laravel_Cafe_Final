@@ -4,72 +4,92 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\Order;
-use App\Models\OrderItem; // <- ADD THIS
-use Illuminate\Support\Facades\Auth;
+use App\Models\OrderItem;
 
 class CartController extends Controller
 {
-    // Add to cart
-    public function add(Request $request, Product $product)
+    public function add(Request $request, $productId)
     {
-        $user = Auth::user();
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
+            'size' => 'nullable|string',
+        ]);
 
-        // Get or create pending order
+        $user = auth()->user();
+        $product = Product::findOrFail($productId);
+
         $order = $user->orders()->firstOrCreate(
             ['status' => 'pending'],
             ['total_amount' => 0]
         );
 
-        // Add or update item
-        $item = $order->items()->where('product_id', $product->id)->first();
+        $size = $request->input('size', 'small');
+
+        $price = $product->price;
+
+        if ($size === 'medium') $price += 50;
+        if ($size === 'large') $price += 100;
+
+        $item = $order->items()
+            ->where('product_id', $productId)
+            ->where('size', $size)
+            ->first();
+
         if ($item) {
-            $item->quantity++;
-            $item->price = $product->price;
+            $item->quantity += $request->quantity;
             $item->save();
         } else {
             $order->items()->create([
                 'product_id' => $product->id,
-                'quantity' => 1,
-                'price' => $product->price,
+                'quantity' => $request->quantity,
+                'price' => $price,
+                'size' => $size,
             ]);
         }
 
-        // Recalculate total
-        $order->total_amount = $order->items->sum(function ($i) {
-            return $i->quantity * $i->price;
-        });
+        $order->load('items');
 
+        $order->total_amount = $order->items->sum(fn($i) => $i->quantity * $i->price);
         $order->save();
 
-        return redirect()->back()->with('success', 'Item added to cart!');
+        return response()->json([
+            'success' => true,
+            'message' => "{$product->name} added to cart",
+            'cartCount' => $order->items->sum('quantity'),
+        ]);
     }
 
-    // Remove single item
-    public function remove(OrderItem $item)
+    public function remove(OrderItem $item, Request $request)
     {
-        $item->delete();
-
-        // Recalculate total
         $order = $item->order;
+        $item->delete();
 
         $order->load('items');
         $order->total_amount = $order->items->sum(fn($i) => $i->quantity * $i->price);
-        $order->save();        $order->save();
+        $order->save();
 
-        return redirect()->back()->with('success', 'Item removed from cart!');
+        return response()->json([
+            'success' => true,
+            'cartCount' => $order->items->sum('quantity'),
+            'message' => 'Item removed from cart'
+        ]);
     }
 
-    // Remove all items
     public function removeAll(Request $request)
     {
-        $user = Auth::user();
+        $user = auth()->user();
         $order = $user->orders()->where('status', 'pending')->first();
+
         if ($order) {
             $order->items()->delete();
             $order->total_amount = 0;
             $order->save();
         }
-        return redirect()->back()->with('success', 'All items removed from cart!');
+
+        return response()->json([
+            'success' => true,
+            'cartCount' => 0,
+            'message' => 'All items removed from cart'
+        ]);
     }
 }

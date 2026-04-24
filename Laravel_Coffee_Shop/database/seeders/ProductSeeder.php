@@ -42,9 +42,7 @@ class ProductSeeder extends Seeder
                 'category' => $product['category'],
                 'price' => $product['price'],
                 'description' => null,
-                'image' => '/images/' . strtolower(str_replace(' ', '_', $product['name'])) . '.jpg', // example: /images/hot_coffee.jpg
-                'is_available' => true,
-                'created_at' => now(),
+                'image' => 'images/' . strtolower(str_replace(' ', '_', $product['name'])) . '.jpg',                'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
