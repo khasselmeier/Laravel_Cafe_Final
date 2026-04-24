@@ -38,6 +38,21 @@
                     </x-form-field>
 
                     <x-form-field>
+                        <x-form-label for="phone">Phone Number</x-form-label>
+                        <div class="mt-2">
+                            <x-form-input
+                                id="phone"
+                                name="phone"
+                                type="text"
+                                :value="old('phone')"
+                                required
+                            />
+                        </div>
+
+                        <x-form-error name="phone" />
+                    </x-form-field>
+
+                    <x-form-field>
                         <x-form-label for="password">Password</x-form-label>
                         <div class="mt-2">
                             <x-form-input id="password" name="password" required type="password"></x-form-input>

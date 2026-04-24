@@ -26,7 +26,7 @@
         @else
             <p class="text-gray-500 text-center">Your cart is empty.</p>
             <div class="text-center mt-4">
-                <a href="{{ route('menu') }}" class="text-blue-500 hover:underline">Return to Menu</a>
+                <a href="{{ route('menu.index') }}">Menu</a>
             </div>
         @endif
     </div>
